@@ -232,3 +232,19 @@ i_rates_log=np.log(i_rates)
 plt.xlim(min(i_rates_log), max(i_rates_log))
 plt.hist(i_rates_log,bins=90,density=True)
 plt.show()
+
+for i in range(n_neurons):
+    arr, count = np.unique(v[i], return_counts=True)
+    if i < N_E:
+        e_rates.append(count[-1] / total_time)
+    else:
+        i_rates.append(count[-1] / total_time)
+
+plt.xlim(0, max(e_rates))
+#sns.distplot(e_rates, hist=True)
+plt.hist(e_rates)
+plt.show()
+plt.xlim(0, max(i_rates))
+#sns.distplot(i_rates, hist=True)
+plt.hist(i_rates)
+plt.show()
