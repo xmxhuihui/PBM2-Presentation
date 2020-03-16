@@ -3,6 +3,7 @@ import pandas as pd
 import random
 import matplotlib.pyplot as plt
 import seaborn as sns
+import collections
 
 # Number of excitatory and inhibitory neurons
 N_E = 80
