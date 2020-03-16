@@ -191,15 +191,15 @@ plt.show()
 for i in range(n_neurons):
     arr, count = np.unique(v[i], return_counts=True)
     if i < N_E:
-        e_rates.append(count[-1] / total_time)
+        e_rates.append(count[-1] / total_time*1000)
     else:
-        i_rates.append(count[-1] / total_time)
+        i_rates.append(count[-1] / total_time*1000)
 
 plt.xlim(0, max(e_rates))
 #sns.distplot(e_rates, hist=True)
-plt.hist(e_rates)
+plt.hist(e_rates,bins=30,normed=True)
 plt.show()
 plt.xlim(0, max(i_rates))
 #sns.distplot(i_rates, hist=True)
-plt.hist(i_rates)
+plt.hist(i_rates,bins=30,normed=True)
 plt.show()
