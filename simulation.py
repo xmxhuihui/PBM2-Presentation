@@ -130,6 +130,8 @@ H_I = 57.8
 v_R = 24.75
 e_firing_rates_freq = {}
 i_firing_rates_freq = {}
+e_rates = []
+i_rates = []
 for i in range(n_neurons):
     v[i, 0] = v_R
 t = range(total_time - 1)
@@ -145,7 +147,6 @@ for dt in t:
             if v[i, dt + 1] >= theta:
                 v[i, dt + 1] = 1000
                 e_spikes += 1
-
     e_firing_rate = e_spikes / N_E
     if e_firing_rate in e_firing_rates_freq:
         e_firing_rates_freq[e_firing_rate] += 1
@@ -185,4 +186,20 @@ plt.stem(e_firing_rates_freq.keys(), e_firing_rates_freq.values())
 plt.show()
 plt.xlim(0, max(i_firing_rates_freq.keys()))
 plt.stem(i_firing_rates_freq.keys(), i_firing_rates_freq.values(), 'r')
+plt.show()
+
+for i in range(n_neurons):
+    arr, count = np.unique(v[i], return_counts=True)
+    if i < N_E:
+        e_rates.append(count[-1] / total_time)
+    else:
+        i_rates.append(count[-1] / total_time)
+
+plt.xlim(0, max(e_rates))
+#sns.distplot(e_rates, hist=True)
+plt.hist(e_rates)
+plt.show()
+plt.xlim(0, max(i_rates))
+#sns.distplot(i_rates, hist=True)
+plt.hist(i_rates)
 plt.show()
