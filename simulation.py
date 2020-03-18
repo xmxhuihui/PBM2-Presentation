@@ -10,7 +10,7 @@ N_E = 80
 N_I = 20
 n_neurons = N_E + N_I
 n_sessions = 6
-total_time = 5000
+total_time = 2000
 
 # All the parameters from Supplementary table from the paper.
 W_EI = 0.44
@@ -40,7 +40,7 @@ spines_info.drop('Unnamed: 0', axis=1, inplace=True)
 spines_info.head()
 
 spines_IS1 = spines_info.loc[spines_info['Starting Imaging Session'] == 1]
-spines_IS1.head(100)
+# spines_IS1.head(100)
 S = spines_IS1['Volume'].mean()
 g = W_EE / S
 print(g)
@@ -82,7 +82,7 @@ def W_Construction():
     for i in range(N_E):
         for j in range(N_E):
             if random.uniform(0, 1) <= c_EE:
-                index = random.randint(1, 3688)
+                index = random.randint(1, 1420)
                 W[i, j] = spines_info['Volume'].loc[spines_info['Global_SpineID'] == index].values[0] * g
                 c[i, j] = 1
             else:
@@ -127,11 +127,11 @@ tau_m = 10
 H_E = 77.6
 H_I = 57.8
 v_R = 24.75
+spike = 150
 # e_firing_rates_freq = {}
 # i_firing_rates_freq = {}
 e_rates = []
 i_rates = []
-#def spike_process():
 h = np.zeros((n_neurons, total_time))
 r = np.zeros(n_neurons)  # Recording the state of each neuron in the last timestep
 v = np.zeros((n_neurons, total_time))
@@ -144,15 +144,15 @@ for dt in t:
     # For excitatory neurons
     for i in range(N_E):
         for j in range(N_E):
-            h[i, dt]=h[i, dt] + c[0, i, j]*W[0, i, j] * r[j]
-        for j in range(N_E,n_neurons):
-            h[i, dt]=h[i, dt] - c[0, i, j]*W[0, i, j] * r[j]
-        if v[i, dt] == 150:
+            h[i, dt] = h[i, dt] + c[0, i, j] * W[0, i, j] * r[j]
+        for j in range(N_E, n_neurons):
+            h[i, dt] = h[i, dt] - c[0, i, j] * W[0, i, j] * r[j]
+        if v[i, dt] == spike:
             v[i, dt + 1] = v_R
         else:
             v[i, dt + 1] = v[i, dt] - v[i, dt] / tau_m + h[i, dt] + H_E / tau_m
             if v[i, dt + 1] >= theta:
-                v[i, dt + 1] = 150
+                v[i, dt + 1] = spike
                 r[i] = 1
             else:
                 r[i] = 0
@@ -166,15 +166,15 @@ for dt in t:
     # For inhibitory neurons
     for i in range(N_E, n_neurons):
         for j in range(N_E):
-            h[i, dt]=h[i, dt] + c[0, i, j]*W[0, i, j] * r[j]
-        for j in range(N_E,n_neurons):
-            h[i, dt]=h[i, dt] - c[0, i, j]*W[0, i, j] * r[j]
-        if v[i, dt] == 150:
+            h[i, dt] = h[i, dt] + c[0, i, j] * W[0, i, j] * r[j]
+        for j in range(N_E, n_neurons):
+            h[i, dt] = h[i, dt] - c[0, i, j] * W[0, i, j] * r[j]
+        if v[i, dt] == spike:
             v[i, dt + 1] = v_R
         else:
             v[i, dt + 1] = v[i, dt] - v[i, dt] / tau_m + h[i, dt] + H_I / tau_m
             if v[i, dt + 1] >= theta:
-                v[i, dt + 1] = 150
+                v[i, dt + 1] = spike
                 r[i] = 1
             else:
                 r[i] = 0
@@ -188,7 +188,7 @@ for dt in t:
 
 # Plot the spiking of an excitatory and inhibitory neuron
 plt.figure()
-plt.plot(range(total_time), v[0],'b')
+plt.plot(range(total_time), v[0], 'b')
 plt.show()
 plt.figure()
 plt.plot(range(total_time), v[N_E], 'r')
@@ -207,44 +207,42 @@ plt.show()
 
 for i in range(n_neurons):
     arr, count = np.unique(v[i], return_counts=True)
+    frequency = dict(zip(arr, count))
     if i < N_E:
-        e_rates.append(count[-1] / total_time*1000)
+        e_rates.append(frequency[spike] / total_time * 1000)
     else:
-        i_rates.append(count[-1] / total_time*1000)
-#spike_process()
+        i_rates.append(frequency[spike] / total_time * 1000)
+
 plt.figure()
 plt.xlim(0, max(e_rates))
-#sns.distplot(e_rates, hist=True)
-plt.hist(e_rates,bins=90,density=True)
+plt.hist(e_rates, bins=90, density=True)
 plt.show()
 plt.figure()
 plt.xlim(0, max(i_rates))
-#sns.distplot(i_rates, hist=True)
-plt.hist(i_rates,bins=90,density=True)
+plt.hist(i_rates, bins=90, density=True)
 plt.show()
 plt.figure()
-e_rates_log=np.log(e_rates)
+e_rates_log = np.log(e_rates)
 plt.xlim(min(e_rates_log), max(e_rates_log))
-plt.hist(e_rates_log,bins=90,density=True)
+plt.hist(e_rates_log, bins=90, density=True)
 plt.show()
 plt.figure()
-i_rates_log=np.log(i_rates)
+i_rates_log = np.log(i_rates)
 plt.xlim(min(i_rates_log), max(i_rates_log))
-plt.hist(i_rates_log,bins=90,density=True)
+plt.hist(i_rates_log, bins=90, density=True)
 plt.show()
 
 for i in range(n_neurons):
     arr, count = np.unique(v[i], return_counts=True)
+    frequency = dict(zip(arr, count))
     if i < N_E:
-        e_rates.append(count[-1] / total_time)
+        e_rates.append(frequency[spike] / total_time)
     else:
-        i_rates.append(count[-1] / total_time)
+        i_rates.append(frequency[spike] / total_time)
 
 plt.xlim(0, max(e_rates))
-#sns.distplot(e_rates, hist=True)
 plt.hist(e_rates)
 plt.show()
 plt.xlim(0, max(i_rates))
-#sns.distplot(i_rates, hist=True)
 plt.hist(i_rates)
 plt.show()
