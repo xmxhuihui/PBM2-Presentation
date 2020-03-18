@@ -82,7 +82,7 @@ def W_Construction():
     for i in range(N_E):
         for j in range(N_E):
             if random.uniform(0, 1) <= c_EE:
-                index = random.randint(1, 1420)
+                index = random.randint(1, 3688)
                 W[i, j] = spines_info['Volume'].loc[spines_info['Global_SpineID'] == index].values[0] * g
                 c[i, j] = 1
             else:
