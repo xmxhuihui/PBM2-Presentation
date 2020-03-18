@@ -10,7 +10,7 @@ N_E = 80
 N_I = 20
 n_neurons = N_E + N_I
 n_sessions = 6
-total_time = 2000
+total_time = 5000
 
 # All the parameters from Supplementary table from the paper.
 W_EI = 0.44
