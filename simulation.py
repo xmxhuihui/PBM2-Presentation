@@ -3,6 +3,7 @@ import pandas as pd
 import random
 import matplotlib.pyplot as plt
 import seaborn as sns
+import collections
 
 # Number of excitatory and inhibitory neurons
 N_E = 80
@@ -127,10 +128,11 @@ H_E = 77.6
 H_I = 57.8
 v_R = 24.75
 spike = 150
-# e_firing_rates_freq = {}
-# i_firing_rates_freq = {}
+
 e_rates = []
 i_rates = []
+e_firing_rates = []
+i_firing_rates = []
 h = np.zeros((n_neurons, total_time))
 r = np.zeros(n_neurons)  # Recording the state of each neuron in the last timestep
 v = np.zeros((n_neurons, total_time))
@@ -138,8 +140,8 @@ for i in range(n_neurons):
     v[i, 0] = v_R
 t = range(total_time - 1)
 for dt in t:
-    # e_spikes = 0
-    # i_spikes = 0
+    e_spikes = 0
+    i_spikes = 0
     # For excitatory neurons
     for i in range(N_E):
         for j in range(N_E):
@@ -153,14 +155,12 @@ for dt in t:
             if v[i, dt + 1] >= theta:
                 v[i, dt + 1] = spike
                 r[i] = 1
+                e_spikes += 1
             else:
                 r[i] = 0
-                # e_spikes += 1
-    # e_firing_rate = e_spikes / N_E
-    # if e_firing_rate in e_firing_rates_freq:
-    #     e_firing_rates_freq[e_firing_rate] += 1
-    # else:
-    #     e_firing_rates_freq[e_firing_rate] = 1
+
+    firing_rate = e_spikes / N_E * 1000
+    e_firing_rates.append(firing_rate)
 
     # For inhibitory neurons
     for i in range(N_E, n_neurons):
@@ -175,15 +175,12 @@ for dt in t:
             if v[i, dt + 1] >= theta:
                 v[i, dt + 1] = spike
                 r[i] = 1
+                i_spikes += 1
             else:
                 r[i] = 0
-                # i_spikes += 1
 
-    # i_firing_rate = i_spikes / N_I
-    # if i_firing_rate in i_firing_rates_freq:
-    #     i_firing_rates_freq[i_firing_rate] += 1
-    # else:
-    #     i_firing_rates_freq[i_firing_rate] = 1
+    firing_rate = i_spikes / N_I * 1000
+    i_firing_rates.append(firing_rate)
 
 # Plot the spiking of an excitatory and inhibitory neuron
 plt.figure()
@@ -193,16 +190,14 @@ plt.figure()
 plt.plot(range(total_time), v[N_E], 'r')
 plt.show()
 
-# # Plot the firing rates for excitatory an inhibitory neurons
-# e_firing_rates_freq = collections.OrderedDict(sorted((float(x), y) for x, y in e_firing_rates_freq.items()))
-# i_firing_rates_freq = collections.OrderedDict(sorted((float(x), y) for x, y in i_firing_rates_freq.items()))
-
-# plt.xlim(0, max(e_firing_rates_freq.keys()))
-# plt.stem(e_firing_rates_freq.keys(), e_firing_rates_freq.values())
-# plt.show()
-# plt.xlim(0, max(i_firing_rates_freq.keys()))
-# plt.stem(i_firing_rates_freq.keys(), i_firing_rates_freq.values(), 'r')
-# plt.show()
+plt.xlim(0, max(e_firing_rates))
+sns.distplot(e_firing_rates)
+# plt.hist(e_firing_rates, normed=True)
+plt.show()
+plt.xlim(0, max(i_firing_rates))
+sns.distplot(i_firing_rates, color='r')
+# plt.hist(i_firing_rates, color='r', normed=True)
+plt.show()
 
 for i in range(n_neurons):
     arr, count = np.unique(v[i], return_counts=True)
