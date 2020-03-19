@@ -32,6 +32,17 @@ sigma_IE = np.sqrt(sigma_IE2)
 sigma_II = np.sqrt(sigma_II2)
 print(str(sigma_EI2) + '\n' + str(sigma_IE2) + '\n' + str(sigma_II2))
 
+theta = 33
+tau_m = 10
+H_E = 77.6
+H_I = 57.8
+v_R = 24.75
+spike = 150
+
+e_rates = []
+i_rates = []
+e_firing_rates = []
+i_firing_rates = []
 # Extracting E->E connectivity from the spine imaging data
 c_EE = 0.2
 path = "Global_Spines_info.csv"
@@ -89,7 +100,6 @@ def W_Construction():
                 W[i, j] = 0
     return W, c
 
-
 W = np.zeros((n_sessions, n_neurons, n_neurons))
 c = np.zeros((n_sessions, n_neurons, n_neurons))
 plt.figure(figsize=(24, 4))
@@ -122,17 +132,7 @@ for i in range(n_sessions):
 
 # Potential of neuron
 
-theta = 33
-tau_m = 10
-H_E = 77.6
-H_I = 57.8
-v_R = 24.75
-spike = 150
 
-e_rates = []
-i_rates = []
-e_firing_rates = []
-i_firing_rates = []
 h = np.zeros((n_neurons, total_time))
 r = np.zeros(n_neurons)  # Recording the state of each neuron in the last timestep
 v = np.zeros((n_neurons, total_time))
@@ -181,47 +181,57 @@ for dt in t:
 
     firing_rate = i_spikes / N_I * 1000
     i_firing_rates.append(firing_rate)
-
 # Plot the spiking of an excitatory and inhibitory neuron
+# plt.figure()
+# plt.plot(range(total_time), v[0], 'b')
+# plt.show()
+# plt.figure()
+# plt.plot(range(total_time), v[N_E], 'r')
+# plt.show()
 plt.figure()
-plt.plot(range(total_time), v[0], 'b')
-plt.show()
-plt.figure()
-plt.plot(range(total_time), v[N_E], 'r')
-plt.show()
-
 plt.xlim(0, max(e_firing_rates))
-sns.distplot(e_firing_rates)
-# plt.hist(e_firing_rates, normed=True)
-plt.show()
+sns.distplot(e_firing_rates, bins=80, color='b')
+plt.figure()
 plt.xlim(0, max(i_firing_rates))
-sns.distplot(i_firing_rates, color='r')
-# plt.hist(i_firing_rates, color='r', normed=True)
-plt.show()
+sns.distplot(i_firing_rates, bins=80, color='r')
 
-for i in range(n_neurons):
-    arr, count = np.unique(v[i], return_counts=True)
-    frequency = dict(zip(arr, count))
-    if i < N_E:
-        e_rates.append(frequency[spike] / total_time * 1000)
-    else:
-        i_rates.append(frequency[spike] / total_time * 1000)
+e_firing_rates_log=[]
+i_firing_rates_log=[]
+plt.figure()
+for i in e_firing_rates:
+    if i != 0:
+        e_firing_rates_log.append(np.log2(i))
+plt.xlim(min(e_firing_rates_log),max(e_firing_rates_log))
+sns.distplot(e_firing_rates_log, color='b')
+plt.figure()
+for i in i_firing_rates:
+    if i != 0:
+        i_firing_rates_log.append(np.log2(i))
+plt.xlim(min(i_firing_rates_log),max(i_firing_rates_log))
+sns.distplot(i_firing_rates_log, color='r')
+# for i in range(n_neurons):
+#     arr, count = np.unique(v[i], return_counts=True)
+#     frequency = dict(zip(arr, count))
+#     if i < N_E:
+#         e_rates.append(frequency[spike] / total_time * 1000)
+#     else:
+#         i_rates.append(frequency[spike] / total_time * 1000)
 
-plt.figure()
-plt.xlim(0, max(e_rates))
-plt.hist(e_rates, bins=90, density=True)
-plt.show()
-plt.figure()
-plt.xlim(0, max(i_rates))
-plt.hist(i_rates, bins=90, density=True)
-plt.show()
-plt.figure()
-e_rates_log = np.log(e_rates)
-plt.xlim(min(e_rates_log), max(e_rates_log))
-plt.hist(e_rates_log, bins=90, density=True)
-plt.show()
-plt.figure()
-i_rates_log = np.log(i_rates)
-plt.xlim(min(i_rates_log), max(i_rates_log))
-plt.hist(i_rates_log, bins=90, density=True)
-plt.show()
+# plt.figure()
+# plt.xlim(0, max(e_rates))
+# plt.hist(e_rates, bins=90, density=True)
+# plt.show()
+# plt.figure()
+# plt.xlim(0, max(i_rates))
+# plt.hist(i_rates, bins=90, density=True)
+# plt.show()
+# plt.figure()
+# e_rates_log = np.log(e_rates)
+# plt.xlim(min(e_rates_log), max(e_rates_log))
+# plt.hist(e_rates_log, bins=90, density=True)
+# plt.show()
+# plt.figure()
+# i_rates_log = np.log(i_rates)
+# plt.xlim(min(i_rates_log), max(i_rates_log))
+# plt.hist(i_rates_log, bins=90, density=True)
+# plt.show()
