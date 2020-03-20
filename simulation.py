@@ -93,6 +93,7 @@ def W_Construction(IS):
                 W[i, j] = 0
     return W
 
+
 W = np.zeros((n_sessions, n_neurons, n_neurons))
 plt.figure(figsize=(24, 4))
 for i in range(n_sessions):
@@ -198,17 +199,22 @@ for i in range(n_sessions):
 plt.figure()
 plt.plot(range(total_time), v[0], 'b')
 plt.show()
+plt.show()
 plt.figure()
 plt.plot(range(total_time), v[N_E], 'r')
 plt.show()
+plt.show()
 
-# Method 2 plot:
+e_firing_rates_log = []
+i_firing_rates_log = []
 plt.figure()
 plt.xlim(0, max(e_firing_rates_2))
 sns.distplot(e_firing_rates_2,bins=30, color='b')
+plt.show()
 plt.figure()
 plt.xlim(0, max(i_firing_rates_2))
 sns.distplot(i_firing_rates_2,bins=30, color='r')
+plt.show()
 
 e_firing_rates_log_2=np.log(e_firing_rates_2)
 i_firing_rates_log_2=np.log(i_firing_rates_2)
