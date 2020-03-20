@@ -3,7 +3,6 @@ import pandas as pd
 import random
 import matplotlib.pyplot as plt
 import seaborn as sns
-import collections
 
 # Number of excitatory and inhibitory neurons
 N_E = 80
@@ -100,6 +99,7 @@ def W_Construction():
                 W[i, j] = 0
     return W, c
 
+
 W = np.zeros((n_sessions, n_neurons, n_neurons))
 c = np.zeros((n_sessions, n_neurons, n_neurons))
 plt.figure(figsize=(24, 4))
@@ -191,24 +191,26 @@ for dt in t:
 plt.figure()
 plt.xlim(0, max(e_firing_rates))
 sns.distplot(e_firing_rates, bins=80, color='b')
+plt.show()
 plt.figure()
 plt.xlim(0, max(i_firing_rates))
 sns.distplot(i_firing_rates, bins=80, color='r')
+plt.show()
 
-e_firing_rates_log=[]
-i_firing_rates_log=[]
+e_firing_rates_log = []
+i_firing_rates_log = []
 plt.figure()
 for i in e_firing_rates:
-    if i != 0:
-        e_firing_rates_log.append(np.log2(i))
-plt.xlim(min(e_firing_rates_log),max(e_firing_rates_log))
+    e_firing_rates_log.append(np.log10(i + 1))
+plt.xlim(min(e_firing_rates_log), max(e_firing_rates_log))
 sns.distplot(e_firing_rates_log, color='b')
+plt.show()
 plt.figure()
 for i in i_firing_rates:
-    if i != 0:
-        i_firing_rates_log.append(np.log2(i))
-plt.xlim(min(i_firing_rates_log),max(i_firing_rates_log))
+    i_firing_rates_log.append(np.log10(i + 1))
+plt.xlim(min(i_firing_rates_log), max(i_firing_rates_log))
 sns.distplot(i_firing_rates_log, color='r')
+plt.show()
 # for i in range(n_neurons):
 #     arr, count = np.unique(v[i], return_counts=True)
 #     frequency = dict(zip(arr, count))
