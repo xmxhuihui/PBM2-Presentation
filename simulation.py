@@ -3,7 +3,7 @@ import pandas as pd
 import random
 import matplotlib.pyplot as plt
 import seaborn as sns
-import collections
+from statsmodels.graphics.tsaplots import plot_acf
 
 # Number of excitatory and inhibitory neurons
 N_E = 80
@@ -39,8 +39,8 @@ H_I = 57.8
 v_R = 24.75
 spike = 150
 
-e_rates = []
-i_rates = []
+e_rates = np.zeros((n_sessions,N_E))
+i_rates = np.zeros((n_sessions,N_I))
 e_firing_rates = []
 i_firing_rates = []
 # Extracting E->E connectivity from the spine imaging data
@@ -48,7 +48,6 @@ c_EE = 0.2
 path = "Global_Spines_info.csv"
 spines_info = pd.read_csv(path)
 spines_info.drop('Unnamed: 0', axis=1, inplace=True)
-spines_info.head()
 
 spines_IS1 = spines_info.loc[spines_info['Starting Imaging Session'] == 1]
 # spines_IS1.head(100)
@@ -60,7 +59,7 @@ print(g)
 # Connectivity matrix 8*8
 # EI
 # I*
-def W_Construction():
+def W_Construction(IS):
     c_EE = 0.2
     c_EI = 0.4
     c_IE = 0.3
@@ -90,10 +89,12 @@ def W_Construction():
                 W[i, j] = np.random.lognormal(mu_II, sigma_II)
 
     # E->E connections
+    #index_list = spines_info['Global_SpineID'].loc[(spines_info['Starting Imaging Session']<=IS)&(spines_info['Ending Imaging Session']>=IS)]
+    #print(len(index_list))
     for i in range(N_E):
         for j in range(N_E):
             if random.uniform(0, 1) <= c_EE:
-                index = random.randint(1, 3688)
+                index = random.randint(1,3688)
                 W[i, j] = spines_info['Volume'].loc[spines_info['Global_SpineID'] == index].values[0] * g
                 c[i, j] = 1
             else:
@@ -104,7 +105,7 @@ W = np.zeros((n_sessions, n_neurons, n_neurons))
 c = np.zeros((n_sessions, n_neurons, n_neurons))
 plt.figure(figsize=(24, 4))
 for i in range(n_sessions):
-    W[i], c[i] = W_Construction()
+    W[i], c[i] = W_Construction(i+1)
     plt.subplot(1, 6, i + 1)
     sns.heatmap(W[i], vmin=0, vmax=1.6, cmap='jet')
 # Recurrent input of neuron i
@@ -133,54 +134,74 @@ for i in range(n_sessions):
 # Potential of neuron
 
 
-h = np.zeros((n_neurons, total_time))
-r = np.zeros(n_neurons)  # Recording the state of each neuron in the last timestep
-v = np.zeros((n_neurons, total_time))
-for i in range(n_neurons):
-    v[i, 0] = v_R
-t = range(total_time - 1)
-for dt in t:
-    e_spikes = 0
-    i_spikes = 0
-    # For excitatory neurons
-    for i in range(N_E):
-        for j in range(N_E):
-            h[i, dt] = h[i, dt] + c[0, i, j] * W[0, i, j] * r[j]
-        for j in range(N_E, n_neurons):
-            h[i, dt] = h[i, dt] - c[0, i, j] * W[0, i, j] * r[j]
-        if v[i, dt] == spike:
-            v[i, dt + 1] = v_R
-        else:
-            v[i, dt + 1] = v[i, dt] - v[i, dt] / tau_m + h[i, dt] + H_E / tau_m
-            if v[i, dt + 1] >= theta:
-                v[i, dt + 1] = spike
-                r[i] = 1
-                e_spikes += 1
+
+
+def sess(IS):
+  # Recording the state of each neuron in the last timestep
+    for i in range(n_neurons):
+        v[i, 0] = v_R
+    t = range(total_time - 1)
+    for dt in t:
+        e_spikes = 0
+        i_spikes = 0
+        # For excitatory neurons
+        for i in range(N_E):
+            for j in range(N_E):
+                h[i, dt] = h[i, dt] + c[IS-1, i, j] * W[IS-1, i, j] * r[j]
+            for j in range(N_E, n_neurons):
+                h[i, dt] = h[i, dt] - c[IS-1, i, j] * W[IS-1, i, j] * r[j]
+            if v[i, dt] == spike:
+                v[i, dt + 1] = v_R
             else:
-                r[i] = 0
-
-    firing_rate = e_spikes / N_E * 1000
-    e_firing_rates.append(firing_rate)
-
-    # For inhibitory neurons
-    for i in range(N_E, n_neurons):
-        for j in range(N_E):
-            h[i, dt] = h[i, dt] + c[0, i, j] * W[0, i, j] * r[j]
-        for j in range(N_E, n_neurons):
-            h[i, dt] = h[i, dt] - c[0, i, j] * W[0, i, j] * r[j]
-        if v[i, dt] == spike:
-            v[i, dt + 1] = v_R
-        else:
-            v[i, dt + 1] = v[i, dt] - v[i, dt] / tau_m + h[i, dt] + H_I / tau_m
-            if v[i, dt + 1] >= theta:
-                v[i, dt + 1] = spike
-                r[i] = 1
-                i_spikes += 1
+                v[i, dt + 1] = v[i, dt] - v[i, dt] / tau_m + h[i, dt] + H_E / tau_m
+                if v[i, dt + 1] >= theta:
+                    v[i, dt + 1] = spike
+                    r[i] = 1
+                    e_spikes += 1
+                    e_rates[IS-1,i]=e_rates[IS-1,i]+1
+                else:
+                    r[i] = 0
+    
+        firing_rate = e_spikes / N_E * 1000
+        e_firing_rates.append(firing_rate)
+        # For inhibitory neurons
+        for i in range(N_E, n_neurons):
+            for j in range(N_E):
+                h[i, dt] = h[i, dt] + c[0, i, j] * W[0, i, j] * r[j]
+            for j in range(N_E, n_neurons):
+                h[i, dt] = h[i, dt] - c[0, i, j] * W[0, i, j] * r[j]
+            if v[i, dt] == spike:
+                v[i, dt + 1] = v_R
             else:
-                r[i] = 0
+                v[i, dt + 1] = v[i, dt] - v[i, dt] / tau_m + h[i, dt] + H_I / tau_m
+                if v[i, dt + 1] >= theta:
+                    v[i, dt + 1] = spike
+                    r[i] = 1
+                    i_spikes += 1
+                    i_rates[IS-1,i-N_E]=i_rates[IS-1,i-N_E]+1
+                else:
+                    r[i] = 0
+    
+        firing_rate = i_spikes / N_I * 1000
+        i_firing_rates.append(firing_rate)
 
-    firing_rate = i_spikes / N_I * 1000
-    i_firing_rates.append(firing_rate)
+
+for i in range(n_sessions):
+    v = np.zeros((n_neurons, total_time))
+    h = np.zeros((n_neurons, total_time))
+    r = np.zeros(n_neurons)
+    sess(i+1)
+e_rates=e_rates/total_time*1000
+i_rates=i_rates/total_time*1000
+
+plt.figure(figsize=(48,8))
+for i in range(n_sessions):
+    plt.subplot(1,2*n_sessions,2*i+1)
+    #plt.bar(range(20),e_rates[i,0:20],color='b')
+    plt.bar(x=0,bottom=range(20),width=e_rates[i,0:20],height=0.5, color='b',orientation="horizontal")
+    plt.subplot(1,2*n_sessions,2*i+2)
+    #plt.bar(range(20),i_rates[i,0:20],color='r')
+    plt.bar(x=0,bottom=range(20),width=i_rates[i,0:20],height=0.5, color='r',orientation="horizontal")
 # Plot the spiking of an excitatory and inhibitory neuron
 # plt.figure()
 # plt.plot(range(total_time), v[0], 'b')
@@ -189,10 +210,10 @@ for dt in t:
 # plt.plot(range(total_time), v[N_E], 'r')
 # plt.show()
 plt.figure()
-plt.xlim(0, max(e_firing_rates))
+plt.xlim(0, 400)
 sns.distplot(e_firing_rates, bins=80, color='b')
 plt.figure()
-plt.xlim(0, max(i_firing_rates))
+plt.xlim(0, 800)
 sns.distplot(i_firing_rates, bins=80, color='r')
 
 e_firing_rates_log=[]
@@ -200,13 +221,13 @@ i_firing_rates_log=[]
 plt.figure()
 for i in e_firing_rates:
     if i != 0:
-        e_firing_rates_log.append(np.log2(i))
+        e_firing_rates_log.append(np.log(i))
 plt.xlim(min(e_firing_rates_log),max(e_firing_rates_log))
 sns.distplot(e_firing_rates_log, color='b')
 plt.figure()
 for i in i_firing_rates:
     if i != 0:
-        i_firing_rates_log.append(np.log2(i))
+        i_firing_rates_log.append(np.log(i))
 plt.xlim(min(i_firing_rates_log),max(i_firing_rates_log))
 sns.distplot(i_firing_rates_log, color='r')
 # for i in range(n_neurons):
@@ -235,3 +256,5 @@ sns.distplot(i_firing_rates_log, color='r')
 # plt.xlim(min(i_rates_log), max(i_rates_log))
 # plt.hist(i_rates_log, bins=90, density=True)
 # plt.show()
+
+# plot_acf(W[0:6,0:N_E,0:N_E])
