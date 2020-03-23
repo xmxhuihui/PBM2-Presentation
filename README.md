@@ -1,4 +1,5 @@
 # PBM2-Presentation
 
 ## New Update:
-Fig 2(b)
+Method A: F=n/T
+duration(T) = 50ms, 100ms
