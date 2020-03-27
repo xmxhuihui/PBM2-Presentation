@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import random
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 # Number of excitatory and inhibitory neurons
 N_E = 80
@@ -28,6 +27,7 @@ W_EE = 0.37
 W_EI2 = 0.49
 W_IE2 = 0.65
 W_II2 = 0.53
+W_EE2 = 0.26
 
 mu_EI = W_EI
 mu_IE = W_IE
@@ -521,12 +521,96 @@ corr_coef_II_I=tmp/(np.sqrt(tmp1)*np.sqrt(tmp2))
 print(corr_coef_II_I)
 
 # Theoretical method: Equation (32)
-W_EE_mean=np.mat(W[0:N_E,0:N_E]).mean()
-W2=[[W[i][j]**2 for j in range(n_neurons)] for i in range(n_neurons)]
-W_EE2_mean=np.mat(W2[0:N_E,0:N_E]).mean()
-W_EI_mean=np.mat(W[0:N_E,N_E:n_neurons]).mean()
-W_EI2_mean=np.mat(W2[0:N_E,N_E:n_neurons]).mean()
-W_IE_mean=np.mat(W[N_E:n_neurons,0:N_E]).mean()
-W_IE2_mean=np.mat(W2[N_E:n_neurons,0:N_E]).mean()
-W_II_mean=np.mat(W[N_E:n_neurons,N_E:n_neurons]).mean()
-W_II2_mean=np.mat(W2[N_E:n_neurons,N_E:n_neurons]).mean()
+W_EE_mean=np.mat(W_rEE[0:N_E,0:N_E]).mean()
+W_EI_mean=np.mat(W_rEI[0:N_E,N_E:n_neurons]).mean()
+W_IE_mean=np.mat(W_rIE[N_E:n_neurons,0:N_E]).mean()
+W_II_mean=np.mat(W_rII[N_E:n_neurons,N_E:n_neurons]).mean()
+W_rEE2=np.mat([[W_rEE[i][j]**2 for j in range(n_neurons)] for i in range(n_neurons)])
+W_EE2_mean=W_rEE2[0:N_E, 0:N_E].mean()
+W_rEI2=np.mat([[W_rEI[i][j]**2 for j in range(n_neurons)] for i in range(n_neurons)])
+W_EI2_mean=W_rEI2[0:N_E, N_E:n_neurons].mean()
+W_rIE2=np.mat([[W_rIE[i][j]**2 for j in range(n_neurons)] for i in range(n_neurons)])
+W_IE2_mean=W_rIE2[N_E:n_neurons, 0:N_E].mean()
+W_rII2=np.mat([[W_rII[i][j]**2 for j in range(n_neurons)] for i in range(n_neurons)])
+W_II2_mean=W_rII2[N_E:n_neurons, N_E:n_neurons].mean()
+v_original_E_mean=np.array(e_firing_rate).mean()
+v_original_I_mean=np.array(i_firing_rate).mean()
+e_firing_rate2=[e_firing_rate[i]**2 for i in range(N_E)]
+i_firing_rate2=[i_firing_rate[i]**2 for i in range(N_I)]
+v_original_E2_mean=np.array(e_firing_rate2).mean()
+v_original_I2_mean=np.array(i_firing_rate2).mean()
+sE2=W_EE2*v_original_E2_mean-(W_EE**2)*(v_original_E_mean**2)+W_EI2*v_original_I2_mean-(W_EI**2)*(v_original_I_mean**2)
+sI2=W_IE2*v_original_E2_mean-(W_IE**2)*(v_original_E_mean**2)+W_II2*v_original_I2_mean-(W_II**2)*(v_original_I_mean**2)
+# 1. E-E Rewiring
+
+v_rEE_E_mean=e_firing_rate_EE_mean
+e_firing_rate_EE2=[e_firing_rate_EE[i]**2 for i in range(N_E)]
+v_rEE_E2_mean=np.array(e_firing_rate_EE2).mean()
+v_rEE_I_mean=i_firing_rate_EE_mean
+i_firing_rate_EE2=[i_firing_rate_EE[i]**2 for i in range(N_I)]
+v_rEE_I2_mean=np.array(i_firing_rate_EE2).mean()
+W_rEE_tilde=np.multiply(W[0:N_E,0:N_E],W_rEE[0:N_E,0:N_E]).mean()
+v_rEE_E_tilde=np.multiply(e_firing_rate,e_firing_rate_EE).mean()
+v_rEE_I_tilde=np.multiply(i_firing_rate,i_firing_rate_EE).mean()
+rho_E_rEE=(-(W_EE**2)*(v_rEE_E_mean**2)+W_rEE_tilde*v_rEE_E_tilde-(W_EI**2)*(v_rEE_I_mean**2)+W_EI2*v_rEE_I_tilde)/sE2
+rho_I_rEE=(-(W_IE**2)*(v_rEE_E_mean**2)+W_IE2*v_rEE_E_tilde-(W_II**2)*(v_rEE_I_mean**2)+W_II2*v_rEE_E_tilde)/sI2
+
+# 2. E-I Rewiring
+
+v_rEI_E_mean=e_firing_rate_EI_mean
+e_firing_rate_EI2=[e_firing_rate_EI[i]**2 for i in range(N_E)]
+v_rEI_E2_mean=np.array(e_firing_rate_EI2).mean()
+v_rEI_I_mean=i_firing_rate_EI_mean
+i_firing_rate_EI2=[i_firing_rate_EI[i]**2 for i in range(N_I)]
+v_rEI_I2_mean=np.array(i_firing_rate_EI2).mean()
+W_rEI_tilde=np.multiply(W[0:N_E,N_E:n_neurons],W_rEI[0:N_E,N_E:n_neurons]).mean()
+v_rEI_E_tilde=np.multiply(e_firing_rate,e_firing_rate_EI).mean()
+v_rEI_I_tilde=np.multiply(i_firing_rate,i_firing_rate_EI).mean()
+rho_E_rEI=(-(W_EE**2)*(v_rEI_E_mean**2)+W_EE2*v_rEI_E_tilde-(W_EI**2)*(v_rEI_I_mean**2)+W_rEI_tilde*v_rEI_I_tilde)/sE2
+rho_I_rEI=(-(W_IE**2)*(v_rEI_E_mean**2)+W_IE2*v_rEI_E_tilde-(W_II**2)*(v_rEI_I_mean**2)+W_II2*v_rEI_I_tilde)/sI2
+
+# 3. I-E Rewiring
+
+v_rIE_E_mean=e_firing_rate_IE_mean
+e_firing_rate_IE2=[e_firing_rate_IE[i]**2 for i in range(N_E)]
+v_rIE_E2_mean=np.array(e_firing_rate_IE2).mean()
+v_rIE_I_mean=i_firing_rate_IE_mean
+i_firing_rate_IE2=[i_firing_rate_IE[i]**2 for i in range(N_I)]
+v_rIE_I2_mean=np.array(i_firing_rate_IE2).mean()
+W_rIE_tilde=np.multiply(W[N_E:n_neurons,0:N_E],W_rIE[N_E:n_neurons,0:N_E]).mean()
+v_rIE_E_tilde=np.multiply(e_firing_rate,e_firing_rate_IE).mean()
+v_rIE_I_tilde=np.multiply(i_firing_rate,i_firing_rate_IE).mean()
+rho_E_rIE=(-(W_EE**2)*(v_rIE_E_mean**2)+W_EE2*v_rIE_E_tilde-(W_EI**2)*(v_rIE_I_mean**2)+W_EI2*v_rIE_I_tilde)/sE2
+rho_I_rIE=(-(W_IE**2)*(v_rIE_E_mean**2)+W_rIE_tilde*v_rIE_E_tilde-(W_II**2)*(v_rIE_I_mean**2)+W_II2*v_rIE_I_tilde)/sI2
+
+# 4. I-I Rewiring
+v_rII_E_mean=e_firing_rate_II_mean
+e_firing_rate_II2=[e_firing_rate_II[i]**2 for i in range(N_E)]
+v_rII_E2_mean=np.array(e_firing_rate_II2).mean()
+v_rII_I_mean=i_firing_rate_II_mean
+i_firing_rate_II2=[i_firing_rate_II[i]**2 for i in range(N_I)]
+v_rII_I2_mean=np.array(i_firing_rate_II2).mean()
+W_rII_tilde=np.multiply(W[N_E:n_neurons,N_E:n_neurons],W_rII[N_E:n_neurons,N_E:n_neurons]).mean()
+v_rII_E_tilde=np.multiply(e_firing_rate,e_firing_rate_II).mean()
+v_rII_I_tilde=np.multiply(i_firing_rate,i_firing_rate_II).mean()
+rho_E_rII=(-(W_EE**2)*(v_rII_E_mean**2)+W_EE2*v_rII_E_tilde-(W_EI**2)*(v_rII_I_mean**2)+W_EI2*v_rII_I_tilde)/sE2
+rho_I_rII=(-(W_IE**2)*(v_rII_E_mean**2)+W_IE2*v_rII_E_tilde-(W_II**2)*(v_rII_I_mean**2)+W_rII_tilde*v_rII_I_tilde)/sI2
+#Plotting figure 3
+plt.figure()
+
+plt.subplot(1,4,1)
+plt.ylim([-1,1])   
+plt.scatter([1,2],[corr_coef_EE_E,corr_coef_EE_I])
+plt.bar([1,2],[rho_E_rEE,rho_I_rEE])
+plt.subplot(1,4,2)
+plt.ylim([-1,1])   
+plt.scatter([1,2],[corr_coef_EI_E,corr_coef_EI_I])
+plt.bar([1,2],[rho_E_rEI,rho_I_rIE])
+plt.subplot(1,4,3)
+plt.ylim([-1,1])   
+plt.scatter([1,2],[corr_coef_IE_E,corr_coef_IE_I])
+plt.bar([1,2],[rho_E_rIE,rho_I_rIE])
+plt.subplot(1,4,4)
+plt.ylim([-1,1])   
+plt.scatter([1,2],[corr_coef_II_E,corr_coef_II_I])
+plt.bar([1,2],[rho_E_rII,rho_I_rII])
