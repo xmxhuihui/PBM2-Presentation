@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 import random
 import matplotlib.pyplot as plt
-
+from sklearn.neighbors import KernelDensity
+import seaborn as sns
 # Number of excitatory and inhibitory neurons
 N_E = 80
 N_I = 20
@@ -614,3 +615,47 @@ plt.subplot(1,4,4)
 plt.ylim([-1,1])   
 plt.scatter([1,2],[corr_coef_II_E,corr_coef_II_I])
 plt.bar([1,2],[rho_E_rII,rho_I_rII])
+
+# u_E=np.sqrt(N_E)*(H_E+W_EE*v_original_E_mean-np.sqrt(N_I)/np.sqrt(N_E)*W_EI*v_original_I_mean)
+# u_I=np.sqrt(N_E)*(H_I+W_IE*v_original_E_mean-np.sqrt(N_I)/np.sqrt(N_E)*W_II*v_original_I_mean)
+
+s_EE2=W_EE2*v_original_E2_mean-(W_EE**2)*(v_original_E_mean**2)
+s_rEE2=W_EE2_mean*v_rEE_E2_mean-(W_EE_mean**2)*(v_rEE_E_mean**2)
+s_EI2=W_EI2*v_original_I2_mean-(W_EI**2)*(v_original_I_mean**2)
+s_rEI2=W_EI2_mean*v_rEI_I2_mean-(W_EI_mean**2)*(v_rEI_I_mean**2)
+s_IE2=W_IE2*v_original_E2_mean-(W_IE**2)*(v_original_E_mean**2)
+s_rIE2=W_IE2_mean*v_rIE_E2_mean-(W_IE_mean**2)*(v_rIE_E_mean**2)
+s_II2=W_II2*v_original_I2_mean-(W_II**2)*(v_original_I_mean**2)
+s_rII2=W_II2_mean*v_rII_I2_mean-(W_II_mean**2)*(v_rII_I_mean**2)
+u_rEE_E=np.sqrt(N_E)*(H_E+W_EE_mean*v_rEE_E_mean-np.sqrt(N_I)/np.sqrt(N_E)*W_EI*v_rEE_I_mean)
+u_rEI_E=np.sqrt(N_E)*(H_E+W_EE*v_rEI_E_mean-np.sqrt(N_I)/np.sqrt(N_E)*W_EI_mean*v_rEI_I_mean)
+u_rIE_I=np.sqrt(N_E)*(H_I+W_IE_mean*v_rIE_E_mean-np.sqrt(N_I)/np.sqrt(N_E)*W_II*v_rIE_I_mean)
+u_rII_I=np.sqrt(N_E)*(H_I+W_IE*v_rII_E_mean-np.sqrt(N_I)/np.sqrt(N_E)*W_II_mean*v_rII_I_mean)
+n_trials=500
+h_EE=np.zeros(n_trials)
+h_EI=np.zeros(n_trials)
+h_IE=np.zeros(n_trials)
+h_II=np.zeros(n_trials)
+for i in range(n_trials):
+    eta_E=np.random.normal(0,1)
+    eta_I=np.random.normal(0,1)
+    h_EE[i]=u_rEE_E+eta_E*np.sqrt(s_rEE2)+eta_I*np.sqrt(s_EI2)
+    h_EI[i]=u_rEI_E+eta_E*np.sqrt(s_EE2)+eta_I*np.sqrt(s_rEI2)
+    h_IE[i]=u_rIE_I+eta_E*np.sqrt(s_rIE2)+eta_I*np.sqrt(s_II2)
+    h_II[i]=u_rII_I+eta_E*np.sqrt(s_IE2)+eta_I*np.sqrt(s_rII2)
+plt.figure()
+# plt.xlim(0,2000)
+sns.distplot(h_EE,bins=50,kde=True,color='b')
+sns.distplot(h_EI,bins=50,kde=True,color='r')
+# kde_EE = KernelDensity(kernel='gaussian', bandwidth=0.005).fit(h_EE.reshape(-1,1))
+# kde_EI = KernelDensity(kernel='gaussian', bandwidth=0.05).fit(h_EI.reshape(-1,1))
+# plt.plot(x,np.exp(kde_EE.score_samples(x)))
+# plt.plot(x,np.exp(kde_EI.score_samples(x)))
+plt.figure()
+# plt.xlim(0,2000)
+sns.distplot(h_IE,bins=50,kde=True,color='b')
+sns.distplot(h_II,bins=50,kde=True,color='r')
+# kde_IE = KernelDensity(kernel='gaussian', bandwidth=0.05).fit(h_IE.reshape(-1,1))
+# kde_II = KernelDensity(kernel='gaussian', bandwidth=0.05).fit(h_II.reshape(-1,1))
+# plt.plot(x,np.exp(kde_IE.score_samples(x)))
+# plt.plot(x,np.exp(kde_II.score_samples(x)))
