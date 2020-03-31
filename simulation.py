@@ -161,7 +161,7 @@ for i in range(n_sessions):
     i_firing_time=[[] for i in range(N_I)]
     sess(i+1)
     for l in range(n_neurons):
-        for j in range(int(duration)):
+        for j in range(int(total_time/duration)):
             e_spikes_2=0
             i_spikes_2=0
             if l<N_E:
