@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Number of excitatory and inhibitory neurons
-N_E = 80
-N_I = 20
+N_E = 800
+N_I = 200
 n_neurons = N_E + N_I
 n_sessions = 1
-total_time = 50000
+total_time = 500000
 
 # All the parameters from Supplementary table from the paper.
 W_EI = 0.44
@@ -107,7 +107,7 @@ def sess(IS):
     # For excitatory neurons
     for dt in t:
         h[:, dt] =np.dot(W[IS - 1,:,:],np.transpose(r))
-        v[:,dt+1]=v[:,dt]+(-v[:,dt]/tau_m+h[:,dt]+H/tau_m)*0.1
+        v[:,dt+1]=v[:,dt]+(-v[:,dt]/tau_m+h[:,dt]+H/tau_m)*0.01
         for i in range(n_neurons):
             if v[i,dt]==spike:
                 v[i,dt+1]=v_R
@@ -118,6 +118,8 @@ def sess(IS):
                     e_firing_time[i].append(dt + 1)
                 else:
                     i_firing_time[i - N_E].append(dt + 1)
+            else:
+                r[i]=0
 
 
 e_firing_rates = [[] for i in range(n_sessions)]
@@ -138,10 +140,10 @@ for i in range(n_sessions):
     for j in range(n_neurons):
         #if len(e_firing_time[j]) != 0:
         if j<N_E and len(e_firing_time[j]) != 0:
-            e_firing_rates[i].append(len(e_firing_time[j]) / total_time * 1000*10)
+            e_firing_rates[i].append(len(e_firing_time[j]) / total_time * 1000*100)
         #if len(i_firing_time[j-N_E]) != 0:
         elif j>=N_E and len(i_firing_time[j-N_E]) != 0:
-            i_firing_rates[i].append(len(i_firing_time[j-N_E]) / total_time * 1000*10)
+            i_firing_rates[i].append(len(i_firing_time[j-N_E]) / total_time * 1000*100)
 
 
 plt.figure(figsize=(48, 8))
@@ -164,23 +166,23 @@ plt.plot(range(total_time+1), v[N_E], 'r')
 plt.show()
 
 plt.figure()
-plt.xlim(0, 2000)
+plt.xlim(500, 800)
 sns.distplot(e_firing_rates[0], color='b')
 plt.show()
 plt.figure()
-plt.xlim(0, 3000)
+plt.xlim(0, 600)
 sns.distplot(i_firing_rates[0], color='r')
 plt.show()
 
 e_firing_rates_log = np.log(e_firing_rates[0])
 i_firing_rates_log = np.log(i_firing_rates[0])
 plt.figure()
-plt.xlim(0, 10)
+plt.xlim(5, 8)
 sns.distplot(e_firing_rates_log, color='b')
 plt.show()
 
 plt.figure()
-plt.xlim(0, 10)
+plt.xlim(5, 8)
 sns.distplot(i_firing_rates_log, color='r')
 plt.show()
 
