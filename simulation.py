@@ -20,16 +20,29 @@ W_EE = 0.37
 W_EI2 = 0.49
 W_IE2 = 0.65
 W_II2 = 0.53
+W_EE2 = 0.26
 
 mu_EI = W_EI
 mu_IE = W_IE
 mu_II = W_II
+mu_EE = W_EE
 sigma_EI2 = W_EI2 - W_EI ** 2
 sigma_IE2 = W_IE2 - W_IE2 ** 2
 sigma_II2 = W_II2 - W_II ** 2
+sigma_EE2 = W_EE2 - W_EE ** 2
 sigma_EI = np.sqrt(sigma_EI2)
 sigma_IE = np.sqrt(sigma_IE2)
 sigma_II = np.sqrt(sigma_II2)
+sigma_EE = np.sqrt(sigma_EE2)
+
+mu_EI_ln = np.log(mu_EI**2/np.sqrt(mu_EI**2+sigma_EI2))
+sigma_EI_ln = np.sqrt(np.log(1 + sigma_EI2/mu_EI**2))
+mu_IE_ln = np.log(mu_IE**2/np.sqrt(mu_IE**2+sigma_IE2))
+sigma_IE_ln = np.sqrt(np.log(1 + sigma_IE2/mu_IE**2))
+mu_II_ln = np.log(mu_II**2/np.sqrt(mu_II**2 + sigma_II2))
+sigma_II_ln = np.sqrt(np.log(1 + sigma_II2/mu_II**2))
+mu_EE_ln = np.log(mu_EE**2/np.sqrt(mu_EE**2 + sigma_EE2))
+sigma_EE_ln = np.sqrt(np.log(1 + sigma_EE2/mu_EE**2))
 
 theta = 33
 tau_m = 10
@@ -67,21 +80,22 @@ def W_Construction(IS):
                 # E -> E
                 if j < N_E:
                     if random.uniform(0, 1) <= c_EE:
-                        index = random.randint(1, 3688)
-                        W[i, j] = spines_info['Volume'].loc[spines_info['Global_SpineID'] == index].values[0] * g
+                        # index = random.randint(1, 3688)
+                        # W[i, j] = spines_info['Volume'].loc[spines_info['Global_SpineID'] == index].values[0] * g
+                        W[i, j] = np.random.lognormal(mu_EE_ln, sigma_EE_ln)
                 # E -> I
                 else:
                     if random.uniform(0, 1) <= c_EI:
-                        W[i, j] = -np.random.lognormal(mu_EI, sigma_EI)
+                        W[i, j] = -np.random.lognormal(mu_EI_ln, sigma_EI_ln)
             else:
                 # I -> E
                 if j < N_E:
                     if random.uniform(0, 1) <= c_IE:
-                        W[i, j] = np.random.lognormal(mu_IE, sigma_IE)
+                        W[i, j] = np.random.lognormal(mu_IE_ln, sigma_IE_ln)
                 # I -> I
                 else:
                     if random.uniform(0, 1) <= c_II:
-                        W[i, j] = -np.random.lognormal(mu_II, sigma_II)
+                        W[i, j] = -np.random.lognormal(mu_II_ln, sigma_II_ln)
     return W
 
 
@@ -89,6 +103,23 @@ W = np.zeros((n_sessions, n_neurons, n_neurons))
 plt.figure(figsize=(24, 4))
 for i in range(n_sessions):
     W[i] = W_Construction(i + 1)
+    # print('Session {}'.format(i + 1))
+    # w_ee = np.array(W[i, 0:N_E, 0:N_E]).flatten()
+    # w_ei = np.array(W[i, 0:N_E, N_E:]).flatten()
+    # w_ie = np.array(W[i, N_E:, 0:N_E]).flatten()
+    # w_ii = np.array(W[i, N_E:, N_E:]).flatten()
+    # print('###### E -> E #######')
+    # print('Mean: {}'.format(np.mean(w_ee)))
+    # print('Variance: {}'.format(np.var(w_ee)))
+    # print('###### E -> I #######')
+    # print('Mean: {}'.format(np.mean(w_ei)))
+    # print('Variance: {}'.format(np.var(w_ei)))
+    # print('###### I -> E #######')
+    # print('Mean: {}'.format(np.mean(w_ie)))
+    # print('Variance: {}'.format(np.var(w_ie)))
+    # print('###### I -> I #######')
+    # print('Mean: {}'.format(np.mean(w_ii)))
+    # print('Variance: {}'.format(np.var(w_ii)))
     plt.subplot(1, 6, i + 1)
     sns.heatmap(W[i], vmin=0, vmax=1.6, cmap='jet')
 
