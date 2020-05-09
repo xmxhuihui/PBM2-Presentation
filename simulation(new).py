@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Number of excitatory and inhibitory neurons
-N_E = 800
-N_I = 200
+N_E = 3200
+N_I = 800
 n_neurons = N_E + N_I
 n_sessions = 1
-total_time = 500000
+total_time = 5000
 
 # All the parameters from Supplementary table from the paper.
 W_EI = 0.44
@@ -19,27 +19,32 @@ W_EE = 0.37
 W_EI2 = 0.49
 W_IE2 = 0.65
 W_II2 = 0.53
+W_EE2 = 0.26
 
 mu_EI = W_EI
 mu_IE = W_IE
 mu_II = W_II
+mu_EE = W_EE
 sigma_EI2 = W_EI2 - W_EI ** 2
 sigma_IE2 = W_IE2 - W_IE2 ** 2
 sigma_II2 = W_II2 - W_II ** 2
 sigma_EI = np.sqrt(sigma_EI2)
 sigma_IE = np.sqrt(sigma_IE2)
 sigma_II = np.sqrt(sigma_II2)
+sigma_EE2 = W_EE2 - W_EE ** 2
 
-lnmu_EI=np.log(mu_EI**2/np.sqrt(mu_EI**2+sigma_EI2))
-lnmu_IE=np.log(mu_IE**2/np.sqrt(mu_IE**2+sigma_IE2))
-lnmu_II=np.log(mu_II**2/np.sqrt(mu_II**2+sigma_II2))
-lnsigma_EI=np.sqrt(np.log(1+sigma_EI2/mu_EI**2))
-lnsigma_IE=np.sqrt(np.log(1+sigma_IE2/mu_IE**2))
-lnsigma_II=np.sqrt(np.log(1+sigma_II2/mu_II**2))
+lnmu_EI = np.log(mu_EI ** 2 / np.sqrt(mu_EI ** 2 + sigma_EI2))
+lnmu_IE = np.log(mu_IE ** 2 / np.sqrt(mu_IE ** 2 + sigma_IE2))
+lnmu_II = np.log(mu_II ** 2 / np.sqrt(mu_II ** 2 + sigma_II2))
+lnsigma_EI = np.sqrt(np.log(1 + sigma_EI2 / mu_EI ** 2))
+lnsigma_IE = np.sqrt(np.log(1 + sigma_IE2 / mu_IE ** 2))
+lnsigma_II = np.sqrt(np.log(1 + sigma_II2 / mu_II ** 2))
+mu_EE_ln = np.log(mu_EE**2/np.sqrt(mu_EE**2 + sigma_EE2))
+sigma_EE_ln = np.sqrt(np.log(1 + sigma_EE2/mu_EE**2))
 theta = 33
 tau_m = 10
-H_E = 77.6
-H_I = 57.8
+H_E = 35 # 77.6
+H_I = 33.8
 v_R = 24.75
 spike = 150
 
@@ -74,6 +79,7 @@ def W_Construction(IS):
                     if random.uniform(0, 1) <= c_EE:
                         index = random.randint(1, 1420)
                         W[i, j] = spines_info['Volume'].loc[spines_info['Global_SpineID'] == index].values[0] * g
+                        # W[i, j] = np.random.lognormal(mu_EE_ln, sigma_EE_ln)
                 # E -> I
                 else:
                     if random.uniform(0, 1) <= c_EI:
@@ -106,45 +112,44 @@ def sess(IS):
 
     # For excitatory neurons
     for dt in t:
-        h[:, dt] =np.dot(W[IS - 1,:,:],np.transpose(r))
-        v[:,dt+1]=v[:,dt]+(-v[:,dt]/tau_m+h[:,dt]+H/tau_m)*0.01
+        h[:, dt] = np.dot(W[IS - 1, :, :], r)
+        v[:, dt + 1] = v[:, dt] + (-v[:, dt] / tau_m + h[:, dt] + H / tau_m) * 0.1
         for i in range(n_neurons):
-            if v[i,dt]==spike:
-                v[i,dt+1]=v_R
-            if v[i,dt+1]>=theta:
-                v[i,dt+1]=spike
-                r[i]=1
+            if v[i, dt] == spike:
+                v[i, dt + 1] = v_R
+            if v[i, dt + 1] >= theta:
+                v[i, dt + 1] = spike
+                r[i] = 1
                 if i < N_E:
                     e_firing_time[i].append(dt + 1)
                 else:
                     i_firing_time[i - N_E].append(dt + 1)
             else:
-                r[i]=0
+                r[i] = 0
 
 
 e_firing_rates = [[] for i in range(n_sessions)]
 i_firing_rates = [[] for i in range(n_sessions)]
-H=np.zeros(n_neurons)
+H = np.zeros(n_neurons)
 for i in range(n_neurons):
-    if(i<N_E):
-        H[i]=H_E
+    if (i < N_E):
+        H[i] = H_E
     else:
-        H[i]=H_I
+        H[i] = H_I
 for i in range(n_sessions):
-    v = np.zeros((n_neurons, total_time+1))
-    h = np.zeros((n_neurons, total_time+1))
+    v = np.zeros((n_neurons, total_time + 1))
+    h = np.zeros((n_neurons, total_time + 1))
     r = np.zeros(n_neurons)
     e_firing_time = [[] for i in range(N_E)]
     i_firing_time = [[] for i in range(N_I)]
     sess(i + 1)
     for j in range(n_neurons):
-        #if len(e_firing_time[j]) != 0:
-        if j<N_E and len(e_firing_time[j]) != 0:
-            e_firing_rates[i].append(len(e_firing_time[j]) / total_time * 1000*100)
-        #if len(i_firing_time[j-N_E]) != 0:
-        elif j>=N_E and len(i_firing_time[j-N_E]) != 0:
-            i_firing_rates[i].append(len(i_firing_time[j-N_E]) / total_time * 1000*100)
-
+        # if len(e_firing_time[j]) != 0:
+        if j < N_E and len(e_firing_time[j]) != 0:
+            e_firing_rates[i].append(len(e_firing_time[j]) / total_time * 1000 * 10)
+        # if len(i_firing_time[j-N_E]) != 0:
+        elif j >= N_E and len(i_firing_time[j - N_E]) != 0:
+            i_firing_rates[i].append(len(i_firing_time[j - N_E]) / total_time * 1000 * 10)
 
 plt.figure(figsize=(48, 8))
 for i in range(n_sessions):
@@ -159,56 +164,56 @@ for i in range(n_sessions):
 
 # Plot the spiking of an excitatory and inhibitory neuron
 plt.figure()
-plt.plot(range(total_time+1), v[0], 'b')
+plt.plot(range(total_time + 1), v[5], 'b')
 plt.show()
 plt.figure()
-plt.plot(range(total_time+1), v[N_E], 'r')
+plt.plot(range(total_time + 1), v[N_E], 'r')
 plt.show()
 
 plt.figure()
-plt.xlim(500, 800)
-sns.distplot(e_firing_rates[0], color='b')
+plt.xlim(0, 200)
+sns.distplot(e_firing_rates[0], color='b', kde_kws={'bw': 0.1})
 plt.show()
 plt.figure()
-plt.xlim(0, 600)
-sns.distplot(i_firing_rates[0], color='r')
+plt.xlim(0, 200)
+sns.distplot(i_firing_rates[0], color='r', kde_kws={'bw': 0.1})
 plt.show()
 
 e_firing_rates_log = np.log(e_firing_rates[0])
 i_firing_rates_log = np.log(i_firing_rates[0])
 plt.figure()
 plt.xlim(5, 8)
-sns.distplot(e_firing_rates_log, color='b')
+sns.distplot(e_firing_rates_log, color='b',kde_kws={'bw':0.1})
 plt.show()
 
 plt.figure()
 plt.xlim(5, 8)
-sns.distplot(i_firing_rates_log, color='r')
+sns.distplot(i_firing_rates_log, color='r', kde_kws={'bw':0.1})
 plt.show()
 
-# # Autocorrelogram
-# e_corr_scores = []
-# i_corr_scores = []
+# Autocorrelogram
+e_corr_scores = []
+i_corr_scores = []
 
-# # Autocorrelogram scores for excitatory and inhibitory firing rates
-# e_s1 = pd.Series(e_firing_rates[0])
-# i_s1 = pd.Series(i_firing_rates[0])
-# for i in range(n_sessions):
-#     e_s2 = pd.Series(e_firing_rates[i])
-#     e_corr_scores.append(e_s1.corr(e_s2))
+# Autocorrelogram scores for excitatory and inhibitory firing rates
+e_s1 = pd.Series(e_firing_rates[0])
+i_s1 = pd.Series(i_firing_rates[0])
+for i in range(n_sessions):
+    e_s2 = pd.Series(e_firing_rates[i])
+    e_corr_scores.append(e_s1.corr(e_s2))
 
-#     i_s2 = pd.Series(i_firing_rates[i])
-#     i_corr_scores.append((i_s1.corr(i_s2)))
+    i_s2 = pd.Series(i_firing_rates[i])
+    i_corr_scores.append((i_s1.corr(i_s2)))
 
-# print(e_corr_scores)
-# print(i_corr_scores)
+print(e_corr_scores)
+print(i_corr_scores)
 
-# # Autocorrelogram scores for E->E connectivity matrix
-# arr = np.array(W[0, 0:N_E, 0:N_E])
-# s1 = pd.Series(arr.flatten())
-# e_e_corr_Scores = []
-# for i in range(n_sessions):
-#     s2 = pd.Series(np.array(W[i, 0:N_E, 0:N_E]).flatten())
-#     e_e_corr_Scores.append(s1.corr(s2))
+# Autocorrelogram scores for E->E connectivity matrix
+arr = np.array(W[0, 0:N_E, 0:N_E])
+s1 = pd.Series(arr.flatten())
+e_e_corr_Scores = []
+for i in range(n_sessions):
+    s2 = pd.Series(np.array(W[i, 0:N_E, 0:N_E]).flatten())
+    e_e_corr_Scores.append(s1.corr(s2))
 
-# print(e_e_corr_Scores)
+print(e_e_corr_Scores)
